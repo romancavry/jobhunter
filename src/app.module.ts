@@ -6,6 +6,9 @@ import { JobsModule } from './jobs/jobs.module.js';
 import { DatabaseService } from './database/database.service.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ConfigModule } from '@nestjs/config';
+import { SourcesController } from './sources/sources.controller.js';
+import { SourcesService } from './sources/sources.service.js';
+import { SourcesModule } from './sources/sources.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -23,8 +26,9 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     }),
     JobsModule,
     DatabaseModule,
+    SourcesModule,
   ],
   controllers: [AppController],
-  providers: [AppService, DatabaseService],
+  providers: [AppService],
 })
 export class AppModule {}
