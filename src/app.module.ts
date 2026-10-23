@@ -3,11 +3,8 @@ import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { JobsModule } from './jobs/jobs.module.js';
-import { DatabaseService } from './database/database.service.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ConfigModule } from '@nestjs/config';
-import { SourcesController } from './sources/sources.controller.js';
-import { SourcesService } from './sources/sources.service.js';
 import { SourcesModule } from './sources/sources.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();

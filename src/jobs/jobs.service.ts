@@ -1,8 +1,4 @@
-
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { JobsRepository } from './jobs.repository.js';
 import { CreateJobDto } from './dto/create-job.dto.js';

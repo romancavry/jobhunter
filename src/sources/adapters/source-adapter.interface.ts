@@ -1,4 +1,4 @@
-export interface Job {
+export interface ParsedJob {
   externalId: string;
   title: string;
   company: string;
@@ -9,7 +9,7 @@ export interface Job {
 
 export interface SourceConfig {
   id: string;
-  type: 'XING' | 'INDEED';
+  type: string;
   url: string;
   enabled: boolean;
   settings: {
@@ -20,5 +20,5 @@ export interface SourceConfig {
 }
 
 export interface SourceAdapter {
-  fetchJobs(source: SourceConfig): Promise<Job[]>;
+  fetchJobs(source: SourceConfig): Promise<ParsedJob[]>;
 }

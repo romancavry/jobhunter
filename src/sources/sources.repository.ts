@@ -1,4 +1,3 @@
-
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
 import { CreateSourceDto } from './dto/create-source.dto.js';
@@ -58,10 +57,7 @@ export class SourcesRepository {
     return source;
   }
 
-  async update(
-    id: string,
-    data: UpdateSourceDto,
-  ): Promise<JobSource | null> {
+  async update(id: string, data: UpdateSourceDto): Promise<JobSource | null> {
     const [source] = await this.db.query<JobSource>(
       `
       UPDATE job_sources
@@ -81,9 +77,7 @@ export class SourcesRepository {
         data.type ?? null,
         data.url ?? null,
         data.enabled ?? null,
-        data.settings === undefined
-          ? null
-          : JSON.stringify(data.settings),
+        data.settings === undefined ? null : JSON.stringify(data.settings),
       ],
     );
 

@@ -1,4 +1,3 @@
-
 import {
   Body,
   Controller,
@@ -16,9 +15,7 @@ import { UpdateSourceDto } from './dto/update-source.dto.js';
 
 @Controller('sources')
 export class SourcesController {
-  constructor(
-    private readonly sourcesService: SourcesService,
-  ) {}
+  constructor(private readonly sourcesService: SourcesService) {}
 
   @Get()
   findAll() {
@@ -28,6 +25,11 @@ export class SourcesController {
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.sourcesService.findOne(id);
+  }
+
+  @Post(':id/sync')
+  sync(@Param('id', ParseUUIDPipe) id: string) {
+    return this.sourcesService.sync(id);
   }
 
   @Post()
