@@ -12,11 +12,7 @@ export interface SourceConfig {
   type: string;
   url: string;
   enabled: boolean;
-  settings: {
-    keywords?: string[];
-    location?: string;
-    maxPages?: number;
-  };
+  settings: Record<string, unknown>;
 }
 
 export interface SourceAdapter {

@@ -105,4 +105,13 @@ export class JobsRepository {
 
     return count;
   }
+
+  async delete(id: string): Promise<boolean> {
+    const rows = await this.db.query<{ id: string }>(
+      'DELETE FROM jobs WHERE id = $1 RETURNING id',
+      [id],
+    );
+
+    return rows.length > 0;
+  }
 }

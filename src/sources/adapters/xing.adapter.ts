@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import * as cheerio from 'cheerio';
 
 import type {
   ParsedJob,
@@ -7,87 +6,121 @@ import type {
   SourceConfig,
 } from './source-adapter.interface.js';
 
+import { XING_JOB_SEARCH_QUERY } from './xing-query.js';
+
+const XING_GRAPHQL_URL = 'https://www.xing.com/graphql/api';
+
+interface XingJob {
+  id: string;
+  title: string;
+  url: string;
+  companyInfo?: {
+    companyNameOverride?: string | null;
+  } | null;
+  location?: {
+    city?: string | null;
+  } | null;
+  summary?: {
+    content?: {
+      keyResponsibilities?: string[] | null;
+    } | null;
+  } | null;
+}
+
+interface XingSearchResponse {
+  data?: {
+    jobSearchByQuery?: {
+      total: number;
+      collection: Array<{
+        jobDetail: XingJob | null;
+      }>;
+    };
+  };
+  errors?: Array<{ message: string }>;
+}
+
+interface XingSettings {
+  keywords?: string[];
+  location?: string;
+  maxPages?: number;
+}
+
 @Injectable()
 export class XingAdapter implements SourceAdapter {
   async fetchJobs(source: SourceConfig): Promise<ParsedJob[]> {
-    const response = await fetch(source.url, {
-      headers: {
-        Accept: 'text/html',
-      },
-      signal: AbortSignal.timeout(15000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`XING returned ${response.status}`);
-    }
-
-    return this.parseJobs(await response.text());
-  }
-
-  parseJobs(html: string): ParsedJob[] {
-    const $ = cheerio.load(html);
+    const { keywords = [], maxPages = 1 } = source.settings as XingSettings;
 
     const jobs = new Map<string, ParsedJob>();
 
-    $('article[class*="job-teaser-list-item-styles__Card"]').each(
-      (_, element) => {
-        const card = $(element);
+    for (let page = 0; page < maxPages; page++) {
+      const response = await fetch(XING_GRAPHQL_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          operationName: 'JobSearchByQuery',
+          variables: {
+            query: {
+              keywords: keywords.join(' '),
+            },
+            consumer: 'loggedin.web.jobs.conv_search_results.center',
+            limit: 20,
+            offset: page * 20,
+            searchMode: 'SEMANTIC',
+          },
+          query: XING_JOB_SEARCH_QUERY,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
 
-        const title = card
-          .find('[data-testid="job-teaser-list-title"]')
-          .first()
-          .text()
-          .trim();
+      const responseText = await response.text();
 
-        const company = card
-          .find('[class*="job-teaser-list-item-styles__Company"]')
-          .first()
-          .text()
-          .trim();
+      if (!response.ok) {
+        console.error('XING GRAPHQL ERROR:', {
+          status: response.status,
+          url: response.url,
+          body: responseText.slice(0, 3000),
+        });
 
-        const locationElement = card
-          .find('[class*="multi-location-display-styles__Container"] p')
-          .first()
-          .clone();
+        throw new Error(`XING GraphQL HTTP ${response.status}`);
+      }
 
-        locationElement.find('b').remove();
+      const result = JSON.parse(responseText) as XingSearchResponse;
 
-        const location = locationElement.text().trim();
+      if (result.errors?.length) {
+        throw new Error(
+          `XING GraphQL: ${result.errors.map((e) => e.message).join(', ')}`,
+        );
+      }
 
-        const description = card
-          .find('ul[class*="summary__List"] li')
-          .map((_, li) => $(li).text().trim())
-          .get()
-          .join('\n');
+      const search = result.data?.jobSearchByQuery;
 
-        const href = card.find('a[href^="/jobs/"]').first().attr('href');
+      if (!search) {
+        throw new Error('XING GraphQL returned no search data');
+      }
 
-        if (!title || !company || !href) return;
+      for (const item of search.collection) {
+        const job = item.jobDetail;
 
-        const url = new URL(href, 'https://www.xing.com');
+        if (!job?.id || !job.title || !job.url) continue;
 
-        if (
-          url.hostname !== 'www.xing.com' ||
-          !/^\/jobs\/[^/]+$/.test(url.pathname)
-        ) {
-          return;
-        }
-
-        url.search = '';
-        url.hash = '';
-
-        const externalId = url.pathname.match(/-(\d+)$/)?.[1] ?? url.toString();
+        const externalId = String(job.id);
 
         jobs.set(externalId, {
           externalId,
-          title,
-          company,
-          location,
-          description,
-          url: url.toString(),
+          title: job.title,
+          company: job.companyInfo?.companyNameOverride ?? 'Unknown',
+          location: job.location?.city ?? undefined,
+          url: new URL(job.url, 'https://www.xing.com').toString(),
+          description:
+            job.summary?.content?.keyResponsibilities?.join('\n') ?? undefined,
         });
-      },
-    );
+      }
+
+      if (search.collection.length < 20) break;
+    }
 
     return [...jobs.values()];
   }

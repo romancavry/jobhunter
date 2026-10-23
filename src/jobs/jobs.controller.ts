@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -27,5 +28,10 @@ export class JobsController {
   @Post()
   create(@Body() body: CreateJobDto) {
     return this.jobsService.create(body);
+  }
+
+  @Delete(':id')
+  delete(@Param('id', ParseUUIDPipe) id: string) {
+    return this.jobsService.delete(id);
   }
 }

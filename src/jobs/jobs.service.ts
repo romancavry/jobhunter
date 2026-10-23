@@ -24,4 +24,8 @@ export class JobsService {
   create(data: CreateJobDto) {
     return this.jobsRepository.create(data);
   }
+
+  delete(id: string) {
+    return this.jobsRepository.delete(id);
+  }
 }
