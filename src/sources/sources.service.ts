@@ -10,12 +10,14 @@ import { UpdateSourceDto } from './dto/update-source.dto.js';
 import { SourceAdapter } from './adapters/source-adapter.interface.js';
 import { XingAdapter } from './adapters/xing.adapter.js';
 import { JobsRepository } from '../jobs/jobs.repository.js';
+import { IndeedAdapter } from './adapters/indeed.adapter.js';
 
 @Injectable()
 export class SourcesService {
   constructor(
     private readonly repository: SourcesRepository,
     private readonly xingAdapter: XingAdapter,
+    private readonly indeedAdapter: IndeedAdapter,
     private readonly jobsRepository: JobsRepository,
   ) {}
 
@@ -23,6 +25,8 @@ export class SourcesService {
     switch (type) {
       case SourceType.XING:
         return this.xingAdapter;
+      case SourceType.INDEED:
+        return this.indeedAdapter;
       default:
         throw new BadRequestException(`Unsupported type: ${type}`);
     }
