@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
 import { CreateJobDto } from './dto/create-job.dto.js';
-import { ParsedJob } from '../sources/adapters/source-adapter.interface.js';
 
 export interface Job {
   id: string;
@@ -63,47 +62,6 @@ export class JobsRepository {
     );
 
     return job;
-  }
-
-  async upsertMany(sourceId: string, jobs: ParsedJob[]): Promise<number> {
-    let count = 0;
-
-    for (const job of jobs) {
-      await this.db.query(
-        `
-          INSERT INTO jobs (
-            source,
-            external_id,
-            title,
-            company,
-            location,
-            url,
-            description
-          )
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
-          ON CONFLICT (source, external_id)
-          DO UPDATE SET
-            title = EXCLUDED.title,
-            company = EXCLUDED.company,
-            location = EXCLUDED.location,
-            url = EXCLUDED.url,
-            description = EXCLUDED.description
-        `,
-        [
-          sourceId,
-          job.externalId,
-          job.title,
-          job.company,
-          job.location ?? null,
-          job.url,
-          job.description ?? null,
-        ],
-      );
-
-      count++;
-    }
-
-    return count;
   }
 
   async delete(id: string): Promise<boolean> {

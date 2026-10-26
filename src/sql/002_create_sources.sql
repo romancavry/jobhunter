@@ -1,9 +1,0 @@
-CREATE TABLE job_sources (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  type TEXT NOT NULL,
-  url TEXT NOT NULL,
-  enabled BOOLEAN NOT NULL DEFAULT TRUE,
-  settings JSONB NOT NULL DEFAULT '{}',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
